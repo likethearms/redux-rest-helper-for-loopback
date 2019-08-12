@@ -1,5 +1,6 @@
 # redux-rest-helper-for-loopback
 Redux rest helper help you to create rest Actions and Reducers
+## Usage example
 ```ts
 import RestActionCreator from "../../utils/redux-rest-creator/RestActionCreator";
 import { notifError } from "./notify.actions";
