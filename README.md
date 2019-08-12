@@ -1,6 +1,7 @@
 # redux-rest-helper-for-loopback
 Redux rest helper help you to create rest Actions and Reducers
 ## Usage example
+### Action & ActionTypes
 ```ts
 import RestActionCreator from "../../utils/redux-rest-creator/RestActionCreator";
 import { notifError } from "./notify.actions";
@@ -23,4 +24,10 @@ export const updateDeviceAction = rc.getUpdateAction();
 export const fetchDeviceAction = rc.getFetchAction();
 export const deleteDeviceAction = rc.getDeleteAction(deleteQuestion, redirect);
 export const listDeviceAction = rc.getListAndCountAction();
+```
+### Reducer
+```ts
+export interface DeviceRedux extends GenericInitState<Device> { }
+const deviceInitState: DeviceRedux = getInitState(deviceFormInitValues);
+const deviceReducer = genericRestReducer<Device>('DEVICE_ENTRY', deviceInitState);
 ```
