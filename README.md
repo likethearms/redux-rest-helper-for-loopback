@@ -27,7 +27,17 @@ export const listDeviceAction = rc.getListAndCountAction();
 ```
 ### Reducer
 ```ts
+import Device from "../interfaces/Device";
+import { GenericInitState, genericRestReducer } from "../utils/redux-rest-creator/generic-rest-reducer";
+import { deviceFormInitValues } from "../forms/DeviceForm";
+import { deviceFormInitValues } from "../forms/DeviceForm";
+
 export interface DeviceRedux extends GenericInitState<Device> { }
 const deviceInitState: DeviceRedux = getInitState(deviceFormInitValues);
 const deviceReducer = genericRestReducer<Device>('DEVICE_ENTRY', deviceInitState);
+
+export default combineReducers({
+  deviceEntry: deviceReducer,
+  ...
+});
 ```
