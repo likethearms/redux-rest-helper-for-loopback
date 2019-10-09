@@ -1,0 +1,35 @@
+{
+  "name": "redux-rest-helper-for-loopback",
+  "version": "0.1.0",
+  "description": "Redux rest helper help you to create rest Actions and Reducers",
+  "scripts": {
+    "build": "tsc -p ./tsconfig.json && npm run create-typings",
+    "prepublish": "npm run build",
+    "postpublish": "PACKAGE_VERSION=$(cat package.json | grep \\\"version\\\" | head -1 | awk -F: '{ print $2 }' | sed 's/[\",]//g' | tr -d '[[:space:]]') && git tag v$PACKAGE_VERSION && git push --tags",
+    "publish-beta": "npm publish --tag beta",
+    "lint": "eslint src --ext .js,.tsx,.ts",
+    "create-typings": "tsc --project ./build-configs/tsconfig.typing.json",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/likethearms/redux-rest-helper-for-loopback.git"
+  },
+  "typings": "lib/index.d.ts",
+  "main": "lib/index.js",
+  "keywords": [],
+  "author": {
+    "name": "Henrik Salmela",
+    "email": "henrik.salmela@gmail.com",
+    "url": "https://github.com/likethearms"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/likethearms/redux-rest-helper-for-loopback/issues"
+  },
+  "homepage": "https://github.com/likethearms/redux-rest-helper-for-loopback#readme",
+  "devDependencies": {
+    "axios": "^0.19.0",
+    "typescript": "^3.6.3"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "outDir": "../lib",
+    "module": "commonjs",
+    "allowSyntheticDefaultImports": true,
+    "sourceMap": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "jsx": "react"
+  },
+  "include": ["./src"],
+  "exclude": [
+    "./**/*.test.ts",
+    "./**/*.test.tsx",
+    "./src/stories/*",
+    "./src/cra-index.tsx",
+    "./src/testing-cra/*",
+    "./src/setupTests.ts"
+  ]
+}
