@@ -3,7 +3,7 @@
   "version": "0.1.1",
   "description": "Redux rest helper help you to create rest Actions and Reducers",
   "scripts": {
-    "build": "tsc -p ./tsconfig.json && npm run create-typings",
+    "build": "rm -rf lib && tsc -p ./tsconfig.json && npm run create-typings",
     "prepublish": "npm run build",
     "postpublish": "PACKAGE_VERSION=$(cat package.json | grep \\\"version\\\" | head -1 | awk -F: '{ print $2 }' | sed 's/[\",]//g' | tr -d '[[:space:]]') && git tag v$PACKAGE_VERSION && git push --tags",
     "publish-beta": "npm publish --tag beta",
