@@ -13,14 +13,22 @@ export abstract class AbstractRestActionCreator<RequestObject> {
 
   redirectHandler?: (url: string) => void;
 
-  onSuccess?: (actionType: string, dispatch: Function) => Promise<any>;
+  onSuccess?: (
+    actionType: string,
+    dispatch: Function,
+    payload: any
+  ) => Promise<any>;
 
   constructor(
     context: string,
     requestObject: RequestObject,
     errorHandler?: (e: Error) => void,
     redirectHandler?: (url: string) => void,
-    onSuccess?: (actionType: string, dispatch: Function) => Promise<any>
+    onSuccess?: (
+      actionType: string,
+      dispatch: Function,
+      payload: any
+    ) => Promise<any>
   ) {
     this.contexts = context;
     this.requestObject = requestObject;
@@ -43,12 +51,13 @@ export abstract class AbstractRestActionCreator<RequestObject> {
       log("Redirect", { skipRedirect, redirectURL });
       dispatch(this.redirectHandler(redirectURL));
     }
-    let promise = Promise.resolve();
-    if (this.onSuccess) promise = this.onSuccess(actionType, dispatch);
-    log("OnSuccess Promise", promise);
+    return (payload: F) => {
+      let promise = Promise.resolve();
+      if (this.onSuccess)
+        promise = this.onSuccess(actionType, dispatch, payload);
+      log("OnSuccess Promise", promise);
 
-    return (payload: F) =>
-      promise.then(() => {
+      return promise.then(() => {
         log("Dispatch SUCCESS");
         dispatch({
           payload,
@@ -56,6 +65,7 @@ export abstract class AbstractRestActionCreator<RequestObject> {
         });
         return Promise.resolve({ data: payload });
       });
+    };
   }
 
   private handleFailRequest<F>(
