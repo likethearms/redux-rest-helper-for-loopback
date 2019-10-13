@@ -37,14 +37,14 @@ export abstract class AbstractRestActionCreator<RequestObject> {
     skipRedirect?: boolean
   ): (r: F) => Promise<RestActionCreatorResponse<F>> {
     return (payload: F) => {
-      dispatch({
-        payload,
-        type: this.getActionType(actionType, RestActionEventTypes.SUCCESS)
-      });
       if (!skipRedirect && redirectURL && this.redirectHandler) {
         dispatch(this.redirectHandler(redirectURL));
       }
       if (this.onSuccess) this.onSuccess(actionType, dispatch);
+      dispatch({
+        payload,
+        type: this.getActionType(actionType, RestActionEventTypes.SUCCESS)
+      });
       return Promise.resolve({ data: payload });
     };
   }
