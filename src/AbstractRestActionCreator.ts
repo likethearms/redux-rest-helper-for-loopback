@@ -1,5 +1,8 @@
 import { AxiosError } from "axios";
+import debug from "debug";
 import { RestActionEventTypes, RestActionCreatorResponse } from "./interfaces";
+
+const log = debug("ReduxRestLB");
 
 export abstract class AbstractRestActionCreator<RequestObject> {
   contexts: string;
@@ -10,14 +13,14 @@ export abstract class AbstractRestActionCreator<RequestObject> {
 
   redirectHandler?: (url: string) => void;
 
-  onSuccess?: (actionType: string, dispatch: Function) => void;
+  onSuccess?: (actionType: string, dispatch: Function) => Promise<any>;
 
   constructor(
     context: string,
     requestObject: RequestObject,
     errorHandler?: (e: Error) => void,
     redirectHandler?: (url: string) => void,
-    onSuccess?: (actionType: string, dispatch: Function) => void
+    onSuccess?: (actionType: string, dispatch: Function) => Promise<any>
   ) {
     this.contexts = context;
     this.requestObject = requestObject;
@@ -36,17 +39,23 @@ export abstract class AbstractRestActionCreator<RequestObject> {
     redirectURL?: string,
     skipRedirect?: boolean
   ): (r: F) => Promise<RestActionCreatorResponse<F>> {
-    return (payload: F) => {
-      if (!skipRedirect && redirectURL && this.redirectHandler) {
-        dispatch(this.redirectHandler(redirectURL));
-      }
-      if (this.onSuccess) this.onSuccess(actionType, dispatch);
-      dispatch({
-        payload,
-        type: this.getActionType(actionType, RestActionEventTypes.SUCCESS)
+    if (!skipRedirect && redirectURL && this.redirectHandler) {
+      log("Redirect", { skipRedirect, redirectURL });
+      dispatch(this.redirectHandler(redirectURL));
+    }
+    let promise = Promise.resolve();
+    if (this.onSuccess) promise = this.onSuccess(actionType, dispatch);
+    log("OnSuccess Promise", promise);
+
+    return (payload: F) =>
+      promise.then(() => {
+        log("Dispatch SUCCESS");
+        dispatch({
+          payload,
+          type: this.getActionType(actionType, RestActionEventTypes.SUCCESS)
+        });
+        return Promise.resolve({ data: payload });
       });
-      return Promise.resolve({ data: payload });
-    };
   }
 
   private handleFailRequest<F>(
