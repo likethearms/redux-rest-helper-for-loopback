@@ -48,6 +48,7 @@ export abstract class AbstractRestActionCreator<RequestObject> {
     skipRedirect?: boolean
   ): (r: F) => Promise<RestActionCreatorResponse<F>> {
     return (payload: F) => {
+      log("OnSuccess");
       if (!skipRedirect && redirectURL && this.redirectHandler) {
         log("Redirect", { skipRedirect, redirectURL });
         dispatch(this.redirectHandler(redirectURL));
@@ -55,7 +56,6 @@ export abstract class AbstractRestActionCreator<RequestObject> {
       let promise = Promise.resolve();
       if (this.onSuccess)
         promise = this.onSuccess(actionType, dispatch, payload);
-      log("OnSuccess Promise", promise);
 
       return promise.then(() => {
         log("Dispatch SUCCESS");
