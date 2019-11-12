@@ -77,7 +77,7 @@ export abstract class AbstractRestActionCreator<RequestObject> {
         type: this.getActionType(actionType, RestActionEventTypes.FAIL)
       });
       if (this.errorHandler) dispatch(this.errorHandler(error));
-      return Promise.resolve({ error });
+      return Promise.reject({ error });
     };
   }
 
