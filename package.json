@@ -1,6 +1,6 @@
 {
   "name": "redux-rest-helper-for-loopback",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Redux rest helper help you to create rest Actions and Reducers",
   "scripts": {
     "build": "rm -rf lib && tsc -p ./tsconfig.json && npm run create-typings",

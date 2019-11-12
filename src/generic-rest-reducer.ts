@@ -5,14 +5,16 @@ import { GenericInitState } from "./interfaces";
 export function genericRestReducer<T>(
   name: string,
   initState: GenericInitState<T>
-): (state: T & GenericInitState<T> | undefined, action: any) => any {
+): (state: (T & GenericInitState<T>) | undefined, action: any) => any {
   return (state: GenericInitState<T> = initState, action: any): any => {
     switch (action.type) {
       case `@${name}:CREATE_REQUEST`:
-      case `@${name}:UPDATE_REQUEST`:
       case `@${name}:FETCH_REQUEST`:
       case `@${name}:DELETE_REQUEST`:
         return { ...state, model: { ...initState.model, isLoading: true } };
+
+      case `@${name}:UPDATE_REQUEST`:
+        return { ...state, model: { ...state.model, isLoading: true } };
 
       case `@${name}:CREATE_SUCCESS`:
       case `@${name}:FETCH_SUCCESS`:
