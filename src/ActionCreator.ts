@@ -4,13 +4,16 @@ export interface ActionOptions {
   redirect?: string;
 }
 
-export type ListAndCountAction<T> = (
-  redirect?: string
-) => (filter?: LoopbackFilter, options?: ActionOptions) => (dispatch: Function) => Promise<T[]>;
+export type ListAndCountAction<T> = () => (
+  filter?: LoopbackFilter,
+  options?: ActionOptions
+) => (dispatch: Function) => Promise<T[]>;
 
-export type FetchAction<T> = (
-  redirect?: string
-) => (id: string | number, options?: ActionOptions) => (dispatch: Function) => Promise<T>;
+export type FetchAction<T> = () => (
+  id: string | number,
+  filter?: LoopbackFilter,
+  options?: ActionOptions
+) => (dispatch: Function) => Promise<T>;
 
 export type CreateAction<T> = (
   redirect?: string
@@ -152,12 +155,14 @@ export const actionCreator = <T extends {}>(
     /**
      * Fetch Action
      */
-    getFetchAction: () => (id: string | number) => (dispatch: Function) => {
+    getFetchAction: () => (id: string | number, filter?: LoopbackFilter) => (
+      dispatch: Function
+    ) => {
       const tc = typeCreator('FETCH');
       dispatch({ type: tc.request });
       return new Promise((resolve, reject) => {
         requests
-          .getById(id)
+          .getById(id, filter)
           .then(handleRedirectSuccess(dispatch, resolve, tc.success))
           .catch(handleError(dispatch, reject, tc.fail));
       });
