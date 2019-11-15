@@ -21,7 +21,8 @@ export type UpdateAction<T> = (
 ) => (id: string | number, body: T, options?: ActionOptions) => (dispatch: Function) => Promise<T>;
 
 export type DeleteAction = (
-  redirect?: string
+  redirect?: string,
+  question?: string
 ) => (id: string | number, options?: ActionOptions) => (dispatch: Function) => Promise<any>;
 
 export interface ActionObject<T> {
@@ -131,11 +132,15 @@ export const actionCreator = <T extends {}>(
     /**
      * Delete Action
      */
-    getDeleteAction: (redirect?: string) => (id: string | number, options?: ActionOptions) => (
-      dispatch: Function
-    ) => {
+    getDeleteAction: (redirect?: string, question?: string) => (
+      id: string | number,
+      options?: ActionOptions
+    ) => (dispatch: Function) => {
       const tc = typeCreator('DELETE');
       dispatch({ type: tc.request });
+      if (question) {
+        if (!confirm(question)) return Promise.reject();
+      }
       return new Promise((resolve, reject) => {
         requests
           .delete(id)
