@@ -85,7 +85,7 @@ export const createReducer = (handlers: any, initialState = {}) => (
 ) => {
   const handler = handlers[action.type];
   if (!handler) return state;
-  const nextState = handler(action, state, initialState);
+  const nextState = handler(state, action, initialState);
   return { ...state, ...nextState };
 };
 
