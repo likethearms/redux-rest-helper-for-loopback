@@ -1,3 +1,5 @@
+import debugModule from 'debug';
+
 export interface GenericInitList<T> {
   isFetchLoading: boolean;
   isCountLoading: boolean;
@@ -17,9 +19,12 @@ export interface GenericInitState<T> {
 
 const request = <T extends {}>(
   state: GenericInitState<T>,
-  _: any,
+  action: any,
   initState: GenericInitState<T>
-) => ({ ...state, model: { ...initState.model, isLoading: true } });
+) => ({
+  ...state,
+  model: { ...state.model, isLoading: true },
+});
 
 const updateRequest = <T extends {}>(state: GenericInitState<T>) => ({
   ...state,
@@ -32,7 +37,7 @@ const success = <T extends {}>(
   initState: GenericInitState<T>
 ) => ({
   ...state,
-  model: { ...initState.model, data: action.payload, isLoading: false },
+  model: { ...state.model, data: action.payload, isLoading: false },
 });
 
 const deleteSuccess = <T extends {}>(
@@ -83,9 +88,11 @@ export const createReducer = (handlers: any, initialState = {}) => (
   state = initialState,
   action: any
 ) => {
+  const debug = debugModule('createReducer');
   const handler = handlers[action.type];
   if (!handler) return state;
   const nextState = handler(state, action, initialState);
+  debug(`${action.type} nextState`, nextState);
   return { ...state, ...nextState };
 };
 
