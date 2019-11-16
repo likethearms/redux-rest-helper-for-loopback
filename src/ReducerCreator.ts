@@ -19,11 +19,11 @@ export interface GenericInitState<T> {
 
 const request = <T extends {}>(
   state: GenericInitState<T>,
-  action: any,
+  _: any,
   initState: GenericInitState<T>
 ) => ({
   ...state,
-  model: { ...state.model, isLoading: true },
+  model: { ...initState.model, isLoading: true },
 });
 
 const updateRequest = <T extends {}>(state: GenericInitState<T>) => ({
@@ -37,7 +37,7 @@ const success = <T extends {}>(
   initState: GenericInitState<T>
 ) => ({
   ...state,
-  model: { ...state.model, data: action.payload, isLoading: false },
+  model: { ...initState.model, data: action.payload, isLoading: false },
 });
 
 const deleteSuccess = <T extends {}>(
