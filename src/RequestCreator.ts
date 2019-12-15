@@ -33,6 +33,8 @@ const defaultCleanBody = (data: any) => {
   return data;
 };
 
+export const cleanBody = defaultCleanBody;
+
 export const requestCreator = <T extends {}>(
   url: string,
   cleanBody: CleanBody<T> = defaultCleanBody

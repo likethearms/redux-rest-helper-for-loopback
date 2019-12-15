@@ -34,9 +34,10 @@ export interface ActionObject<T> {
   getCreateAction: CreateAction<T>;
   getUpdateAction: UpdateAction<T>;
   getDeleteAction: DeleteAction;
+  getCleanAction(): () => { type: string };
 }
 
-export const actionCreator = <T extends {}>(
+export const actionCreator = <T extends { id: string | number }>(
   reduxContext: string,
   requests: RequestsObject<T>,
   onRedirect?: (url: string) => void,
@@ -74,8 +75,9 @@ export const actionCreator = <T extends {}>(
   ) => (data: T) => {
     dispatch({ type, payload: data });
     if (onRedirect) {
-      if (options && options.redirect) onRedirect(options.redirect);
-      else if (redirect) onRedirect(redirect);
+      if (options && options.redirect)
+        dispatch(onRedirect(options.redirect.replace(':id', `${data.id}`)));
+      else if (redirect) dispatch(onRedirect(redirect.replace(':id', `${data.id}`)));
     }
     return resolve(data);
   };
@@ -185,5 +187,12 @@ export const actionCreator = <T extends {}>(
           .catch(handleError(dispatch, reject, tl.fail));
       });
     },
+
+    /**
+     * Clean
+     */
+    getCleanAction: () => () => ({
+      type: `@${reduxContext}:CLEAN`,
+    }),
   };
 };

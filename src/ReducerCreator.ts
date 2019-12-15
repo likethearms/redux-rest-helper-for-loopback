@@ -84,6 +84,8 @@ const countFail = <T extends {}>(state: GenericInitState<T>) => ({
   list: { ...state.list, isCountLoading: false },
 });
 
+const clean = <T extends {}>(_: any, __: any, initState: GenericInitState<T>) => initState;
+
 export const createReducer = (handlers: any, initialState = {}) => (
   state = initialState,
   action: any
@@ -135,6 +137,8 @@ export const reducerCreator = (name: string, initialState: any) => {
     [`@${name}:COUNT_REQUEST`]: countRequest,
     [`@${name}:COUNT_SUCCESS`]: countSuccess,
     [`@${name}:COUNT_FAIL`]: countFail,
+
+    [`@${name}:CLEAN`]: clean,
   };
 
   return {
