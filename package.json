@@ -1,6 +1,6 @@
 {
   "name": "redux-rest-helper-for-loopback",
-  "version": "0.2.19",
+  "version": "0.2.20",
   "description": "Redux rest helper help you to create rest Actions and Reducers",
   "scripts": {
     "build": "rm -rf lib && tsc -p ./tsconfig.json && npm run create-typings",
@@ -28,6 +28,11 @@
     "url": "https://github.com/likethearms/redux-rest-helper-for-loopback/issues"
   },
   "homepage": "https://github.com/likethearms/redux-rest-helper-for-loopback#readme",
+  "peerDependencies": {
+    "redux-thunk": "^2.3.0",
+    "react-redux": "^7.1.3",
+    "axios": "^0.19.0"
+  },
   "devDependencies": {
     "@types/debug": "^4.1.5",
     "axios": "^0.19.0",
