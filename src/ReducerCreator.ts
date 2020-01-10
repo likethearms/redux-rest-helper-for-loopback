@@ -111,7 +111,7 @@ export const createInitState = (data: any) => ({
   },
 });
 
-export const reducerCreator = (name: string, initialState: any) => {
+export const reducerCreator = (name: string, initialState?: any) => {
   const handlers = {
     [`@${name}:CREATE_REQUEST`]: request,
     [`@${name}:FETCH_REQUEST`]: request,
