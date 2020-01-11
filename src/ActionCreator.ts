@@ -41,7 +41,7 @@ export const actionCreator = <T extends { id: string | number }>(
   reduxContext: string,
   requests: RequestsObject<T>,
   onRedirect?: (url: string) => void,
-  errorHandler?: (e: Error) => void
+  errorHandler?: (e: Error, dispatch: Function) => void
 ): ActionObject<T> => {
   /**
    * Type creator
@@ -59,7 +59,7 @@ export const actionCreator = <T extends { id: string | number }>(
     e: Error
   ) => {
     dispatch({ type });
-    if (errorHandler) errorHandler(e);
+    if (errorHandler) errorHandler(e, dispatch);
     return reject(e);
   };
 
