@@ -24,7 +24,7 @@ export interface RequestsObject<T> {
   delete: DeleteRequest;
 }
 
-export type CleanBody<T> = (data: T) => T;
+export type CleanBody<T> = (data: Partial<T>) => T;
 
 export type CountResponse = { count: number };
 
@@ -62,6 +62,6 @@ export const requestCreator = <T extends {}>(
   create: (body: T) => Axios.post<T>(url, cleanBody(body)).then((r) => Promise.resolve(r.data)),
 
   // update record by id
-  update: (id: string | number, body: T) =>
+  update: (id: string | number, body: Partial<T>) =>
     Axios.patch<T>(`${url}/${id}`, cleanBody(body)).then((r) => Promise.resolve(r.data)),
 });
