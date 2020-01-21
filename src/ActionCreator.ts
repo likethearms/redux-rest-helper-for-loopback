@@ -1,4 +1,4 @@
-import { RequestsObject, LoopbackFilter } from './RequestCreator';
+import { LoopbackFilter, RequestsObject } from './RequestCreator';
 
 export interface ActionOptions {
   redirect?: string;
@@ -21,7 +21,11 @@ export type CreateAction<T> = (
 
 export type UpdateAction<T> = (
   redirect?: string
-) => (id: string | number, body: T, options?: ActionOptions) => (dispatch: Function) => Promise<T>;
+) => (
+  id: string | number,
+  body: Partial<T>,
+  options?: ActionOptions
+) => (dispatch: Function) => Promise<T>;
 
 export type DeleteAction = (
   redirect?: string,
@@ -121,7 +125,7 @@ export const actionCreator = <T extends { id: string | number }>(
      */
     getUpdateAction: (redirect?: string) => (
       id: string | number,
-      body: T,
+      body: Partial<T>,
       options?: ActionOptions
     ) => (dispatch: Function) => {
       const tc = typeCreator('UPDATE');

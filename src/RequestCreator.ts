@@ -12,7 +12,7 @@ export type GetAllRequest<T> = (filter?: LoopbackFilter) => Promise<T[]>;
 export type CountRequest = (filter?: LoopbackFilter) => Promise<CountResponse>;
 export type GetByIdRequest<T> = (id: string | number, filter?: LoopbackFilter) => Promise<T>;
 export type CreateRequest<T> = (body: T) => Promise<T>;
-export type UpdateRequest<T> = (id: string | number, body: T) => Promise<T>;
+export type UpdateRequest<T> = (id: string | number, body: Partial<T>) => Promise<T>;
 export type DeleteRequest = (id: string | number) => Promise<any>;
 
 export interface RequestsObject<T> {
@@ -24,7 +24,7 @@ export interface RequestsObject<T> {
   delete: DeleteRequest;
 }
 
-export type CleanBody<T> = (data: Partial<T>) => T;
+export type CleanBody<T> = (data: Partial<T>) => Partial<T>;
 
 export type CountResponse = { count: number };
 
