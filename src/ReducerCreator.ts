@@ -86,8 +86,8 @@ const countFail = <T extends {}>(state: GenericInitState<T>) => ({
 
 const clean = <T extends {}>(_: any, __: any, initState: GenericInitState<T>) => initState;
 
-export const createReducer = (handlers: any, initialState = {}) => (
-  state = initialState,
+export const createReducer = (handlers: any, initialState = {}): typeof initialState => (
+  state: typeof initialState = initialState,
   action: any
 ) => {
   const debug = debugModule('createReducer');
