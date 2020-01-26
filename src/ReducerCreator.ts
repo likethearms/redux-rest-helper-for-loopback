@@ -86,10 +86,10 @@ const countFail = <T extends {}>(state: GenericInitState<T>) => ({
 
 const clean = <T extends {}>(_: any, __: any, initState: GenericInitState<T>) => initState;
 
-export const createReducer = (handlers: any, initialState = {}): typeof initialState => (
-  state: typeof initialState = initialState,
-  action: any
-) => {
+export const createReducer = <Values extends AnyValues = AnyValues>(
+  handlers: any,
+  initialState: Values
+) => (state: Values = initialState, action: any): Values => {
   const debug = debugModule('createReducer');
   const handler = handlers[action.type];
   if (!handler) return state;
@@ -98,7 +98,13 @@ export const createReducer = (handlers: any, initialState = {}): typeof initialS
   return { ...state, ...nextState };
 };
 
-export const createInitState = (data: any) => ({
+export interface AnyValues {
+  [field: string]: any;
+}
+
+export const createInitState = <Values extends AnyValues = AnyValues>(
+  data: Values
+): GenericInitState<Values> => ({
   list: {
     isFetchLoading: false,
     isCountLoading: false,
