@@ -117,7 +117,10 @@ export const createInitState = <Values extends AnyValues = AnyValues>(
   },
 });
 
-export const reducerCreator = (name: string, initialState?: any) => {
+export const reducerCreator = <Values extends AnyValues = AnyValues>(
+  name: string,
+  initialState: Values
+) => {
   const handlers = {
     [`@${name}:CREATE_REQUEST`]: request,
     [`@${name}:FETCH_REQUEST`]: request,
