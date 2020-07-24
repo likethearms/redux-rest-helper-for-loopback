@@ -4,6 +4,8 @@ export interface ActionOptions {
   redirect?: string;
 }
 
+export type ActionType = 'COUNT' | 'CREATE' | 'UPDATE' | 'DELETE' | 'FETCH' | 'LIST';
+
 export type ListAndCountAction<T> = () => (
   filter?: LoopbackFilter,
   options?: ActionOptions
@@ -45,16 +47,20 @@ export const actionCreator = <T extends { id: string | number }>(
   reduxContext: string,
   requests: RequestsObject<T>,
   onRedirect?: (url: string) => void,
-  errorHandler?: (e: Error, dispatch: Function) => void
+  errorHandler?: (e: Error, dispatch: Function) => void,
+  onSuccess?: (event: string, dispatch: Function, data: T) => any
 ): ActionObject<T> => {
   /**
    * Type creator
    */
-  const typeCreator = (action: string) => ({
+  const typeCreator = (action: ActionType) => ({
+    TYPE: action,
     request: `@${reduxContext}:${action}_REQUEST`,
     success: `@${reduxContext}:${action}_SUCCESS`,
     fail: `@${reduxContext}:${action}_FAIL`,
   });
+
+  type TypeCreator = ReturnType<typeof typeCreator>;
 
   /**
    * Handle Request error
@@ -73,11 +79,12 @@ export const actionCreator = <T extends { id: string | number }>(
   const handleRedirectSuccess = (
     dispatch: Function,
     resolve: (data: T) => void,
-    type: string,
+    type: TypeCreator,
     redirect?: string,
     options?: ActionOptions
   ) => (data: T) => {
-    dispatch({ type, payload: data });
+    dispatch({ type: type.success, payload: data });
+    if (onSuccess) onSuccess(type.success, dispatch, data);
     if (onRedirect) {
       if (options && options.redirect)
         dispatch(onRedirect(options.redirect.replace(':id', `${data.id}`)));
@@ -115,7 +122,7 @@ export const actionCreator = <T extends { id: string | number }>(
       return new Promise((resolve, reject) => {
         requests
           .create(body)
-          .then(handleRedirectSuccess(dispatch, resolve, tc.success, redirect, options))
+          .then(handleRedirectSuccess(dispatch, resolve, tc, redirect, options))
           .catch(handleError(dispatch, reject, tc.fail));
       });
     },
@@ -133,7 +140,7 @@ export const actionCreator = <T extends { id: string | number }>(
       return new Promise((resolve, reject) => {
         requests
           .update(id, body)
-          .then(handleRedirectSuccess(dispatch, resolve, tc.success, redirect, options))
+          .then(handleRedirectSuccess(dispatch, resolve, tc, redirect, options))
           .catch(handleError(dispatch, reject, tc.fail));
       });
     },
@@ -153,7 +160,7 @@ export const actionCreator = <T extends { id: string | number }>(
       return new Promise((resolve, reject) => {
         requests
           .delete(id)
-          .then(handleRedirectSuccess(dispatch, resolve, tc.success, redirect, options))
+          .then(handleRedirectSuccess(dispatch, resolve, tc, redirect, options))
           .catch(handleError(dispatch, reject, tc.fail));
       });
     },
@@ -169,7 +176,7 @@ export const actionCreator = <T extends { id: string | number }>(
       return new Promise((resolve, reject) => {
         requests
           .getById(id, filter)
-          .then(handleRedirectSuccess(dispatch, resolve, tc.success))
+          .then(handleRedirectSuccess(dispatch, resolve, tc))
           .catch(handleError(dispatch, reject, tc.fail));
       });
     },
