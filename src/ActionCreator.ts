@@ -48,7 +48,7 @@ export const actionCreator = <T extends { id: string | number }>(
   requests: RequestsObject<T>,
   onRedirect?: (url: string) => void,
   errorHandler?: (e: Error, dispatch: Function) => void,
-  onSuccess?: (event: string, dispatch: Function, data: T) => any
+  onSuccess?: (event: ActionType, dispatch: Function, data: T) => any
 ): ActionObject<T> => {
   /**
    * Type creator
@@ -84,7 +84,7 @@ export const actionCreator = <T extends { id: string | number }>(
     options?: ActionOptions
   ) => (data: T) => {
     dispatch({ type: type.success, payload: data });
-    if (onSuccess) onSuccess(type.success, dispatch, data);
+    if (onSuccess) onSuccess(type.TYPE, dispatch, data);
     if (onRedirect) {
       if (options && options.redirect)
         dispatch(onRedirect(options.redirect.replace(':id', `${data.id}`)));
