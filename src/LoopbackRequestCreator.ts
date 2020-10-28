@@ -13,7 +13,7 @@ export type CountRequest = (filter?: LoopbackFilter) => Promise<CountResponse>;
 export type GetByIdRequest<T> = (id: string | number, filter?: LoopbackFilter) => Promise<T>;
 export type CreateRequest<T> = (body: T) => Promise<T>;
 export type UpdateRequest<T> = (id: string | number, body: Partial<T>) => Promise<T>;
-export type DeleteRequest = (id: string | number) => Promise<any>;
+export type DeleteRequest = (id: string | number) => Promise<DeleteResponse>;
 
 export interface RequestsObject<T> {
   getAll: GetAllRequest<T>;
@@ -27,15 +27,16 @@ export interface RequestsObject<T> {
 export type CleanBody<T> = (data: Partial<T>) => Partial<T>;
 
 export type CountResponse = { count: number };
+export type DeleteResponse = { id: string | number };
 
 const defaultCleanBody = (data: any) => {
   delete data.id; // eslint-disable-line no-param-reassign
   return data;
 };
 
-export const cleanBody = defaultCleanBody;
+export const loopbackCleanBody = defaultCleanBody;
 
-export const requestCreator = <T extends {}>(
+export const loopbackRequestCreator = <T extends {}>(
   url: string,
   cleanBody: CleanBody<T> = defaultCleanBody
 ): RequestsObject<T> => ({
@@ -56,7 +57,7 @@ export const requestCreator = <T extends {}>(
 
   // Delete record by id
   delete: (id: string | number) =>
-    Axios.delete<any>(`${url}/${id}`).then((r) => Promise.resolve(r.data)),
+    Axios.delete<string | number>(`${url}/${id}`).then(() => Promise.resolve({ id })),
 
   // create record by id
   create: (body: T) => Axios.post<T>(url, cleanBody(body)).then((r) => Promise.resolve(r.data)),

@@ -1,4 +1,4 @@
-import { LoopbackFilter, RequestsObject } from './RequestCreator';
+import { DeleteResponse, LoopbackFilter, RequestsObject } from './LoopbackRequestCreator';
 
 export interface ActionOptions {
   redirect?: string;
@@ -35,8 +35,8 @@ export type DeleteAction = (
 ) => (id: string | number, options?: ActionOptions) => (dispatch: Function) => Promise<any>;
 
 export interface ActionObject<T> {
-  getListAndCountAction: ListAndCountAction<T>;
-  getFetchAction: FetchAction<T>;
+  getFindAndCountAction: ListAndCountAction<T>;
+  getFindByIdAction: FetchAction<T>;
   getCreateAction: CreateAction<T>;
   getUpdateAction: UpdateAction<T>;
   getDeleteAction: DeleteAction;
@@ -48,7 +48,7 @@ export const actionCreator = <T extends { id: string | number }>(
   requests: RequestsObject<T>,
   onRedirect?: (url: string) => void,
   errorHandler?: (e: Error, dispatch: Function) => void,
-  onSuccess?: (event: ActionType, dispatch: Function, data: T) => any
+  onSuccess?: (event: ActionType, dispatch: Function, data: T | DeleteResponse) => any
 ): ActionObject<T> => {
   /**
    * Type creator
@@ -83,6 +83,26 @@ export const actionCreator = <T extends { id: string | number }>(
     redirect?: string,
     options?: ActionOptions
   ) => (data: T) => {
+    dispatch({ type: type.success, payload: data });
+    if (onSuccess) onSuccess(type.TYPE, dispatch, data);
+    if (onRedirect) {
+      if (options && options.redirect)
+        dispatch(onRedirect(options.redirect.replace(':id', `${data.id}`)));
+      else if (redirect) dispatch(onRedirect(redirect.replace(':id', `${data.id}`)));
+    }
+    return resolve(data);
+  };
+
+  /**
+   * Handle Request error
+   */
+  const handleDeleteRedirectSuccess = (
+    dispatch: Function,
+    resolve: (data: DeleteResponse) => void,
+    type: TypeCreator,
+    redirect?: string,
+    options?: ActionOptions
+  ) => (data: DeleteResponse) => {
     dispatch({ type: type.success, payload: data });
     if (onSuccess) onSuccess(type.TYPE, dispatch, data);
     if (onRedirect) {
@@ -160,7 +180,7 @@ export const actionCreator = <T extends { id: string | number }>(
       return new Promise((resolve, reject) => {
         requests
           .delete(id)
-          .then(handleRedirectSuccess(dispatch, resolve, tc, redirect, options))
+          .then(handleDeleteRedirectSuccess(dispatch, resolve, tc, redirect, options))
           .catch(handleError(dispatch, reject, tc.fail));
       });
     },
@@ -168,7 +188,7 @@ export const actionCreator = <T extends { id: string | number }>(
     /**
      * Fetch Action
      */
-    getFetchAction: () => (id: string | number, filter?: LoopbackFilter) => (
+    getFindByIdAction: () => (id: string | number, filter?: LoopbackFilter) => (
       dispatch: Function
     ) => {
       const tc = typeCreator('FETCH');
@@ -184,7 +204,7 @@ export const actionCreator = <T extends { id: string | number }>(
     /**
      * List And Count Action
      */
-    getListAndCountAction: () => (filter?: LoopbackFilter) => (dispatch: Function) => {
+    getFindAndCountAction: () => (filter?: LoopbackFilter) => (dispatch: Function) => {
       const tl = typeCreator('LIST');
       dispatch({ type: tl.request });
       countRequest(dispatch, filter);
