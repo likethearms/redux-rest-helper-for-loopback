@@ -31,7 +31,7 @@ export const RxDBRequestCreator = <T extends {}, DB>(
         }
 
         if (filter?.order) {
-          const split = filter.order.split('');
+          const split = filter.order.split(' ');
           query.sort({ [split[0]]: split[1] });
         }
 
