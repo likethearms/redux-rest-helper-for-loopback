@@ -134,14 +134,17 @@ export const actionCreator = <T extends { id: string | number }>(
     /**
      * Create Action
      */
-    getCreateAction: (redirect?: string) => (body: T, options?: ActionOptions) => (
-      dispatch: Function
-    ) => {
+    getCreateAction: (redirect?: string, middleware?: Promise<T>) => (
+      body: T,
+      options?: ActionOptions
+    ) => (dispatch: Function) => {
       const tc = typeCreator('CREATE');
       dispatch({ type: tc.request });
       return new Promise((resolve, reject) => {
-        requests
-          .create(body)
+        const mid = middleware || Promise.resolve(body);
+
+        mid
+          .then((b) => requests.create(b))
           .then(handleRedirectSuccess(dispatch, resolve, tc, redirect, options))
           .catch(handleError(dispatch, reject, tc.fail));
       });
@@ -150,16 +153,18 @@ export const actionCreator = <T extends { id: string | number }>(
     /**
      * Update Action
      */
-    getUpdateAction: (redirect?: string) => (
+    getUpdateAction: (redirect?: string, middleware?: Promise<T>) => (
       id: string | number,
       body: Partial<T>,
       options?: ActionOptions
     ) => (dispatch: Function) => {
       const tc = typeCreator('UPDATE');
       dispatch({ type: tc.request });
+
       return new Promise((resolve, reject) => {
-        requests
-          .update(id, body)
+        const mid = middleware || Promise.resolve(body);
+        mid
+          .then((b) => requests.update(id, b))
           .then(handleRedirectSuccess(dispatch, resolve, tc, redirect, options))
           .catch(handleError(dispatch, reject, tc.fail));
       });
