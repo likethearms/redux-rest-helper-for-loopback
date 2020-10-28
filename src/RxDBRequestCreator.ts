@@ -76,7 +76,7 @@ export const RxDBRequestCreator = <T extends {}, DB>(
   // Get record by id
   getById: (id: string | number, filter?: LoopbackFilter) => {
     return new Promise<T>((resolve, reject) => {
-      db.then((db: any) => db[collectionName].findOne({ id }).exec())
+      db.then((db: any) => db[collectionName].findOne().where({ id }).exec())
         .then((data: any) => {
           if (!data) return reject(new Error('RX: Cannot find record'));
           return resolve(data.toJSON());
@@ -88,7 +88,7 @@ export const RxDBRequestCreator = <T extends {}, DB>(
   // Delete record
   delete: (id: string | number) =>
     new Promise<DeleteResponse>((resolve, reject) => {
-      db.then((db: any) => db[collectionName].findOne({ id }).exec())
+      db.then((db: any) => db[collectionName].findOne().where({ id }).exec())
         .then((record) => record.remove())
         .then(() => resolve({ id }))
         .catch(reject);
@@ -97,7 +97,12 @@ export const RxDBRequestCreator = <T extends {}, DB>(
   // create record by id
   create: (body: T) =>
     new Promise<T>((resolve, reject) => {
-      db.then((db: any) => db[collectionName].insert(body))
+      const bodyWithId = {
+        ...body,
+        id: randomstring.generate(),
+      };
+
+      db.then((db: any) => db[collectionName].insert(bodyWithId))
         .then((data: any) => resolve(data.toJSON()))
         .catch(reject);
     }),
@@ -105,13 +110,8 @@ export const RxDBRequestCreator = <T extends {}, DB>(
   // update record by id
   update: (id: string | number, body: Partial<T>) =>
     new Promise<T>((resolve, reject) => {
-      const bodyWithId = {
-        ...body,
-        id: randomstring.generate(),
-      };
-
-      db.then((db: any) => db[collectionName].findOne({ id }).exec())
-        .then((record) => record.update({ $set: bodyWithId }))
+      db.then((db: any) => db[collectionName].findOne().where({ id }).exec())
+        .then((record) => record.update({ $set: body }))
         .then((data: any) => resolve(data.toJSON()))
         .catch(reject);
     }),
