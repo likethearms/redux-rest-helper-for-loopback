@@ -112,7 +112,7 @@ export const RxDBRequestCreator = <T extends {}, DB>(
     new Promise<T>((resolve, reject) => {
       db.then((db: any) => db[collectionName].findOne().where({ id }).exec())
         .then((record) => record.update({ $set: body }))
-        .then((data: any) => resolve(data.toJSON()))
+        .then((data: any) => resolve(data))
         .catch(reject);
     }),
 });
