@@ -1,8 +1,11 @@
-import { LoopbackFilter, RequestsObject } from './RequestCreator';
+import { DeleteResponse, LoopbackFilter, RequestsObject } from './LoopbackRequestCreator';
 
 export interface ActionOptions {
   redirect?: string;
 }
+
+type CreateMiddleware<T> = (body: T) => Promise<T>;
+type UpdateMiddleware<T> = CreateMiddleware<Partial<T>>;
 
 export type ActionType = 'COUNT' | 'CREATE' | 'UPDATE' | 'DELETE' | 'FETCH' | 'LIST';
 
@@ -18,11 +21,13 @@ export type FetchAction<T> = () => (
 ) => (dispatch: Function) => Promise<T>;
 
 export type CreateAction<T> = (
-  redirect?: string
+  redirect?: string,
+  middleware?: CreateMiddleware<T>
 ) => (body: T, options?: ActionOptions) => (dispatch: Function) => Promise<T>;
 
 export type UpdateAction<T> = (
-  redirect?: string
+  redirect?: string,
+  middleware?: UpdateMiddleware<T>
 ) => (
   id: string | number,
   body: Partial<T>,
@@ -35,8 +40,8 @@ export type DeleteAction = (
 ) => (id: string | number, options?: ActionOptions) => (dispatch: Function) => Promise<any>;
 
 export interface ActionObject<T> {
-  getListAndCountAction: ListAndCountAction<T>;
-  getFetchAction: FetchAction<T>;
+  getFindAndCountAction: ListAndCountAction<T>;
+  getFindByIdAction: FetchAction<T>;
   getCreateAction: CreateAction<T>;
   getUpdateAction: UpdateAction<T>;
   getDeleteAction: DeleteAction;
@@ -48,7 +53,7 @@ export const actionCreator = <T extends { id: string | number }>(
   requests: RequestsObject<T>,
   onRedirect?: (url: string) => void,
   errorHandler?: (e: Error, dispatch: Function) => void,
-  onSuccess?: (event: ActionType, dispatch: Function, data: T) => any
+  onSuccess?: (event: ActionType, dispatch: Function, data: T | DeleteResponse) => any
 ): ActionObject<T> => {
   /**
    * Type creator
@@ -94,6 +99,26 @@ export const actionCreator = <T extends { id: string | number }>(
   };
 
   /**
+   * Handle Request error
+   */
+  const handleDeleteRedirectSuccess = (
+    dispatch: Function,
+    resolve: (data: DeleteResponse) => void,
+    type: TypeCreator,
+    redirect?: string,
+    options?: ActionOptions
+  ) => (data: DeleteResponse) => {
+    dispatch({ type: type.success, payload: data });
+    if (onSuccess) onSuccess(type.TYPE, dispatch, data);
+    if (onRedirect) {
+      if (options && options.redirect)
+        dispatch(onRedirect(options.redirect.replace(':id', `${data.id}`)));
+      else if (redirect) dispatch(onRedirect(redirect.replace(':id', `${data.id}`)));
+    }
+    return resolve(data);
+  };
+
+  /**
    * Count action
    */
   const countRequest = (dispatch: Function, filter?: LoopbackFilter) => {
@@ -114,14 +139,19 @@ export const actionCreator = <T extends { id: string | number }>(
     /**
      * Create Action
      */
-    getCreateAction: (redirect?: string) => (body: T, options?: ActionOptions) => (
-      dispatch: Function
-    ) => {
+    getCreateAction: (redirect?: string, middleware?: CreateMiddleware<T>) => (
+      body: T,
+      options?: ActionOptions
+    ) => (dispatch: Function) => {
       const tc = typeCreator('CREATE');
       dispatch({ type: tc.request });
       return new Promise((resolve, reject) => {
-        requests
-          .create(body)
+        let mid = (b: T) => Promise.resolve(b);
+
+        if (middleware) mid = middleware;
+
+        mid(body)
+          .then((b) => requests.create(b))
           .then(handleRedirectSuccess(dispatch, resolve, tc, redirect, options))
           .catch(handleError(dispatch, reject, tc.fail));
       });
@@ -130,16 +160,21 @@ export const actionCreator = <T extends { id: string | number }>(
     /**
      * Update Action
      */
-    getUpdateAction: (redirect?: string) => (
+    getUpdateAction: (redirect?: string, middleware?: UpdateMiddleware<T>) => (
       id: string | number,
       body: Partial<T>,
       options?: ActionOptions
     ) => (dispatch: Function) => {
       const tc = typeCreator('UPDATE');
       dispatch({ type: tc.request });
+
       return new Promise((resolve, reject) => {
-        requests
-          .update(id, body)
+        let mid = (b: Partial<T>) => Promise.resolve(b);
+
+        if (middleware) mid = middleware;
+
+        mid(body)
+          .then((b) => requests.update(id, b))
           .then(handleRedirectSuccess(dispatch, resolve, tc, redirect, options))
           .catch(handleError(dispatch, reject, tc.fail));
       });
@@ -160,7 +195,7 @@ export const actionCreator = <T extends { id: string | number }>(
       return new Promise((resolve, reject) => {
         requests
           .delete(id)
-          .then(handleRedirectSuccess(dispatch, resolve, tc, redirect, options))
+          .then(handleDeleteRedirectSuccess(dispatch, resolve, tc, redirect, options))
           .catch(handleError(dispatch, reject, tc.fail));
       });
     },
@@ -168,7 +203,7 @@ export const actionCreator = <T extends { id: string | number }>(
     /**
      * Fetch Action
      */
-    getFetchAction: () => (id: string | number, filter?: LoopbackFilter) => (
+    getFindByIdAction: () => (id: string | number, filter?: LoopbackFilter) => (
       dispatch: Function
     ) => {
       const tc = typeCreator('FETCH');
@@ -184,7 +219,7 @@ export const actionCreator = <T extends { id: string | number }>(
     /**
      * List And Count Action
      */
-    getListAndCountAction: () => (filter?: LoopbackFilter) => (dispatch: Function) => {
+    getFindAndCountAction: () => (filter?: LoopbackFilter) => (dispatch: Function) => {
       const tl = typeCreator('LIST');
       dispatch({ type: tl.request });
       countRequest(dispatch, filter);
