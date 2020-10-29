@@ -4,6 +4,9 @@ export interface ActionOptions {
   redirect?: string;
 }
 
+type CreateMiddleware<T> = (body: T) => Promise<T>;
+type UpdateMiddleware<T> = CreateMiddleware<Partial<T>>;
+
 export type ActionType = 'COUNT' | 'CREATE' | 'UPDATE' | 'DELETE' | 'FETCH' | 'LIST';
 
 export type ListAndCountAction<T> = () => (
@@ -18,11 +21,13 @@ export type FetchAction<T> = () => (
 ) => (dispatch: Function) => Promise<T>;
 
 export type CreateAction<T> = (
-  redirect?: string
+  redirect?: string,
+  middleware?: CreateMiddleware<T>
 ) => (body: T, options?: ActionOptions) => (dispatch: Function) => Promise<T>;
 
 export type UpdateAction<T> = (
-  redirect?: string
+  redirect?: string,
+  middleware?: UpdateMiddleware<T>
 ) => (
   id: string | number,
   body: Partial<T>,
@@ -134,16 +139,18 @@ export const actionCreator = <T extends { id: string | number }>(
     /**
      * Create Action
      */
-    getCreateAction: (redirect?: string, middleware?: Promise<T>) => (
+    getCreateAction: (redirect?: string, middleware?: CreateMiddleware<T>) => (
       body: T,
       options?: ActionOptions
     ) => (dispatch: Function) => {
       const tc = typeCreator('CREATE');
       dispatch({ type: tc.request });
       return new Promise((resolve, reject) => {
-        const mid = middleware || Promise.resolve(body);
+        let mid = (b: T) => Promise.resolve(b);
 
-        mid
+        if (middleware) mid = middleware;
+
+        mid(body)
           .then((b) => requests.create(b))
           .then(handleRedirectSuccess(dispatch, resolve, tc, redirect, options))
           .catch(handleError(dispatch, reject, tc.fail));
@@ -153,7 +160,7 @@ export const actionCreator = <T extends { id: string | number }>(
     /**
      * Update Action
      */
-    getUpdateAction: (redirect?: string, middleware?: Promise<T>) => (
+    getUpdateAction: (redirect?: string, middleware?: UpdateMiddleware<T>) => (
       id: string | number,
       body: Partial<T>,
       options?: ActionOptions
@@ -162,8 +169,11 @@ export const actionCreator = <T extends { id: string | number }>(
       dispatch({ type: tc.request });
 
       return new Promise((resolve, reject) => {
-        const mid = middleware || Promise.resolve(body);
-        mid
+        let mid = (b: Partial<T>) => Promise.resolve(b);
+
+        if (middleware) mid = middleware;
+
+        mid(body)
           .then((b) => requests.update(id, b))
           .then(handleRedirectSuccess(dispatch, resolve, tc, redirect, options))
           .catch(handleError(dispatch, reject, tc.fail));

@@ -1,3 +1,4 @@
+import debug from 'debug';
 import randomstring from 'randomstring';
 import {
   CleanBody,
@@ -6,6 +7,8 @@ import {
   LoopbackFilter,
   RequestsObject,
 } from './LoopbackRequestCreator';
+
+const log = debug('reduxRestHelper:rxdb');
 
 const defaultCleanBody = (data: any) => {
   return data;
@@ -22,31 +25,37 @@ export const RxDBRequestCreator = <T extends {}, DB>(
   getAll: (filter?: LoopbackFilter) => {
     return new Promise<T[]>((resolve, reject) => {
       db.then((db: any) => {
-        let query;
-
-        query = db[collectionName].find();
+        log('LoopbackFilter', filter);
+        let query = db[collectionName].find();
 
         if (filter?.where) {
-          query.where(filter.where);
+          log('LoopbackFilter.where accepted', filter?.where);
+          query = query.where(filter.where);
         }
 
         if (filter?.order) {
           const split = filter.order.split(' ');
-          query.sort({ [split[0]]: split[1] });
+          log('LoopbackFilter.order & split accepted', filter?.order, split);
+          query = query.sort({ [split[0]]: split[1] });
         }
 
         if (filter?.limit !== undefined) {
-          query.limit(filter.limit);
+          log('LoopbackFilter.limit accepted', filter?.limit);
+          query = query.limit(filter.limit);
         }
 
         if (filter?.skip !== undefined) {
-          query.skip(filter.skip);
+          log('LoopbackFilter.skip accepted', filter?.skip);
+          query = query.skip(filter.skip);
         }
 
         return query.exec();
       })
         .then((data: any[]) => {
-          return resolve(data.map((d) => d.toJSON()));
+          const json = data.map((d) => d.toJSON());
+          log('Result', data);
+          log('Result JSON', json);
+          return resolve(json);
         })
         .catch(reject);
     });
@@ -100,6 +109,8 @@ export const RxDBRequestCreator = <T extends {}, DB>(
       const bodyWithId = {
         ...body,
         id: randomstring.generate(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
 
       db.then((db: any) => db[collectionName].insert(bodyWithId))
@@ -110,6 +121,13 @@ export const RxDBRequestCreator = <T extends {}, DB>(
   // update record by id
   update: (id: string | number, body: Partial<T>) =>
     new Promise<T>((resolve, reject) => {
+      const updateBody: any = {
+        ...body,
+        updatedAt: new Date().toISOString(),
+      };
+
+      delete updateBody.createdAt;
+
       db.then((db: any) => db[collectionName].findOne().where({ id }).exec())
         .then((record) => record.update({ $set: body }))
         .then((data: any) => resolve(data))
