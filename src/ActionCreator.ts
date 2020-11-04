@@ -4,7 +4,7 @@ export interface ActionOptions {
   redirect?: string;
 }
 
-type CreateMiddleware<T> = (body: T) => Promise<T>;
+type CreateMiddleware<T> = (body: T, dispatch: any) => Promise<T>;
 type UpdateMiddleware<T> = CreateMiddleware<Partial<T>>;
 
 export type ActionType = 'COUNT' | 'CREATE' | 'UPDATE' | 'DELETE' | 'FETCH' | 'LIST';
@@ -22,12 +22,14 @@ export type FetchAction<T> = () => (
 
 export type CreateAction<T> = (
   redirect?: string,
-  middleware?: CreateMiddleware<T>
+  middleware?: CreateMiddleware<T>,
+  handleMiddlewarePreLoading?: boolean
 ) => (body: T, options?: ActionOptions) => (dispatch: Function) => Promise<T>;
 
 export type UpdateAction<T> = (
   redirect?: string,
-  middleware?: UpdateMiddleware<T>
+  middleware?: UpdateMiddleware<T>,
+  handleMiddlewarePreLoading?: boolean
 ) => (
   id: string | number,
   body: Partial<T>,
@@ -53,7 +55,8 @@ export const actionCreator = <T extends { id: string | number }>(
   requests: RequestsObject<T>,
   onRedirect?: (url: string) => void,
   errorHandler?: (e: Error, dispatch: Function) => void,
-  onSuccess?: (event: ActionType, dispatch: Function, data: T | DeleteResponse) => any
+  onSuccess?: (event: ActionType, dispatch: Function, data: T | DeleteResponse) => any,
+  suppressReject: boolean = false
 ): ActionObject<T> => {
   /**
    * Type creator
@@ -75,7 +78,7 @@ export const actionCreator = <T extends { id: string | number }>(
   ) => {
     dispatch({ type });
     if (errorHandler) errorHandler(e, dispatch);
-    return reject(e);
+    if (!suppressReject) return reject(e);
   };
 
   /**
@@ -139,19 +142,23 @@ export const actionCreator = <T extends { id: string | number }>(
     /**
      * Create Action
      */
-    getCreateAction: (redirect?: string, middleware?: CreateMiddleware<T>) => (
-      body: T,
-      options?: ActionOptions
-    ) => (dispatch: Function) => {
+    getCreateAction: (
+      redirect?: string,
+      middleware?: CreateMiddleware<T>,
+      handleMiddlewarePreLoading: boolean = false
+    ) => (body: T, options?: ActionOptions) => (dispatch: Function) => {
       const tc = typeCreator('CREATE');
-      dispatch({ type: tc.request });
+      if (!handleMiddlewarePreLoading) dispatch({ type: tc.request });
       return new Promise((resolve, reject) => {
-        let mid = (b: T) => Promise.resolve(b);
+        let mid = (b: T, _: any) => Promise.resolve(b);
 
         if (middleware) mid = middleware;
 
-        mid(body)
-          .then((b) => requests.create(b))
+        mid(body, dispatch)
+          .then((b) => {
+            if (handleMiddlewarePreLoading) dispatch({ type: tc.request });
+            return requests.create(b);
+          })
           .then(handleRedirectSuccess(dispatch, resolve, tc, redirect, options))
           .catch(handleError(dispatch, reject, tc.fail));
       });
@@ -160,21 +167,26 @@ export const actionCreator = <T extends { id: string | number }>(
     /**
      * Update Action
      */
-    getUpdateAction: (redirect?: string, middleware?: UpdateMiddleware<T>) => (
-      id: string | number,
-      body: Partial<T>,
-      options?: ActionOptions
-    ) => (dispatch: Function) => {
+    getUpdateAction: (
+      redirect?: string,
+      middleware?: UpdateMiddleware<T>,
+      handleMiddlewarePreLoading: boolean = false
+    ) => (id: string | number, body: Partial<T>, options?: ActionOptions) => (
+      dispatch: Function
+    ) => {
       const tc = typeCreator('UPDATE');
-      dispatch({ type: tc.request });
+      if (!handleMiddlewarePreLoading) dispatch({ type: tc.request });
 
       return new Promise((resolve, reject) => {
-        let mid = (b: Partial<T>) => Promise.resolve(b);
+        let mid = (b: Partial<T>, _: any) => Promise.resolve(b);
 
         if (middleware) mid = middleware;
 
-        mid(body)
-          .then((b) => requests.update(id, b))
+        mid(body, dispatch)
+          .then((b) => {
+            if (handleMiddlewarePreLoading) dispatch({ type: tc.request });
+            return requests.update(id, b);
+          })
           .then(handleRedirectSuccess(dispatch, resolve, tc, redirect, options))
           .catch(handleError(dispatch, reject, tc.fail));
       });
